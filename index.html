@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مهمة تحليل البيانات | Data Analysis Mission</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for data visualization tasks -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Google Fonts: Cairo & Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        unrwa: {
+                            blue: '#0072CE',
+                            dark: '#004A87',
+                            light: '#E6F0FA'
+                        },
+                        game: {
+                            accent: '#F59E0B',
+                            purple: '#6D28D9',
+                            darkbg: '#0F172A',
+                            card: '#1E293B'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        tajawal: ['Tajawal', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            background-color: #0F172A;
+            color: #F8FAFC;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #0072CE;
+            border-radius: 4px;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between custom-scrollbar bg-slate-900 text-slate-100">
+
+    <!-- OFFICIAL UNRWA & SCHOOL HEADER -->
+    <header class="bg-slate-800 border-b border-sky-600/30 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <!-- UNRWA Emblem Placeholder / SVG -->
+                <div class="bg-white p-2 rounded-lg shadow flex items-center justify-center">
+                    <svg class="w-10 h-10 text-sky-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-black text-sky-400">مدرسة ذكور وادي السير الإعدادية - UNRWA</h1>
+                    <p class="text-xs md:text-sm text-slate-300">المهارات الرقمية | الصف العاشر الأساسي — الوحدة الأولى: تحليل البيانات</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-xs md:text-sm">
+                <div class="bg-slate-700/80 px-3 py-1.5 rounded-full border border-sky-500/30 text-sky-300 font-bold">
+                    تصميم وإعداد: أ. عامر كراجه
+                </div>
+                <button id="audioToggleBtn" onclick="toggleAudio()" class="p-2 bg-slate-700 rounded-full hover:bg-slate-600 transition" title="الصوت">
+                    <i id="audioIcon" class="fas fa-volume-up text-amber-400"></i>
+                </button>
+                <button onclick="showTeacherLoginModal()" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg font-bold text-xs transition flex items-center gap-1.5">
+                    <i class="fas fa-user-shield"></i>
+                    <span>لوحة المعلم</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="appContainer" class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+        <!-- APP SCREEN WILL BE RENDERED HERE DYNAMICALLY -->
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-950 border-t border-slate-800 text-slate-400 py-4 text-center text-xs">
+        <p>منصة مهمة تحليل البيانات التفاعلية — المهارات الرقمية للصف العاشر الأساسي © 2026 | وزارة التربية والتعليم & UNRWA</p>
+    </footer>
+
+    <!-- TEACHER LOGIN MODAL -->
+    <div id="teacherLoginModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-sky-500/30 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
+            <button onclick="closeModal('teacherLoginModal')" class="absolute top-4 left-4 text-slate-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-sky-600/20 text-sky-400 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h3 class="text-xl font-bold text-sky-400">تسجيل دخول المعلم</h3>
+                <p class="text-xs text-slate-400">أدخل كلمة مرور المعلم المعتمدة للوصول للوحة التحكم</p>
+            </div>
+            <form onsubmit="handleTeacherLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">اسم المعلم</label>
+                    <input type="text" value="عامر كراجه" readonly class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-300">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">كلمة المرور</label>
+                    <input type="password" id="teacherPassword" required placeholder="أدخل كلمة المرور (الافتراضية: your_password)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-sky-500 outline-none">
+                </div>
+                <div id="loginError" class="text-red-400 text-xs hidden"></div>
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg transition shadow-lg">
+                    دخول للوحة المعلم
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SUPABASE DB CONFIG MODAL -->
+    <div id="dbConfigModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-sky-500/30 w-full max-w-lg p-6 rounded-2xl shadow-2xl relative">
+            <button onclick="closeModal('dbConfigModal')" class="absolute top-4 left-4 text-slate-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h3 class="text-xl font-bold text-sky-400 mb-2">إعداد الربط مع قاعدة البيانات (Supabase)</h3>
+            <p class="text-xs text-slate-300 mb-4">يمكنك ربط المنصة بقاعدة بيانات Supabase لحفظ درجات الطلاب عبر الإنترنت ومشاركتها مع كافة الأجهزة.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Project URL</label>
+                    <input type="text" id="supabaseUrlInput" placeholder="https://xyz.supabase.co" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Anon / Public API Key</label>
+                    <input type="password" id="supabaseKeyInput" placeholder="eyJhbGciOiJIUzI1NiI..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs">
+                </div>
+                <div class="flex gap-2 justify-end mt-4">
+                    <button onclick="saveSupabaseConfig()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs">حفظ وإعادة الاتصال</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. APPLICATION STATE & CURRICULUM DATA
+        // =========================================================================
+        const APP_STATE = {
+            student: {
+                name: '',
+                section: 'أ',
+                attempts: 1,
+                startTime: null,
+                endTime: null
+            },
+            currentStage: 0, // 0: Start, 1..5: Stages, 6: Result
+            score: {
+                stage1: 0, // Max 6 (Data vs Info vs Knowledge & Binary)
+                stage2: 0, // Max 6 (Data Types & Sources)
+                stage3: 0, // Max 6 (Big Data Processing)
+                stage4: 0, // Max 6 (Data Visualization)
+                stage5: 0, // Max 6 (Excel Analysis & Interpretation)
+                total: 0   // Total 30
+            },
+            answers: {},
+            audioEnabled: true,
+            supabaseClient: null,
+            sectionsList: ['أ', 'ب', 'ج', 'د', 'هـ']
+        };
+
+        // Curriculum Map & Stage Definitions (Aligned strictly with Pages 10–107)
+        const STAGES = [
+            {
+                id: 1,
+                title: "المرحلة الأولى: البيانات والمعلومات والمعرفة والتمثيل الثنائي",
+                pages: "صفحات الكتاب: 10–25",
+                maxScore: 6,
+                concept: "البيانات حقائق خام لا تحمل معنى بمفردها، والمعلومات ناتج معالجة البيانات، والمعرفة دمج المعلومات مع الخبرة. تُخزّن الحاسوب البيانات بالنظام الثنائي (0 و 1) بوحدة البت (Bit) والبايت (8 بت).",
+                tasks: [
+                    {
+                        type: "classify",
+                        question: "صنّف العناصر التالية بحسب المفهوم الصحيح:",
+                        items: [
+                            { text: "25°م", category: "data", title: "بيانات خام" },
+                            { text: "درجة الحرارة في عمان اليوم 25°م", category: "info", title: "معلومات" },
+                            { text: "الطقس حار اليوم في عمان ويجب ارتداء ملابس خفيفة", category: "knowledge", title: "معرفة" }
+                        ]
+                    },
+                    {
+                        type: "binary_calc",
+                        question: "حوّل الرقم العشري (13) إلى النظام الثنائي (Binary):",
+                        options: ["1010", "1101", "1110", "0111"],
+                        correct: 1,
+                        explanation: "13 مقسومة على 2 بالترتيب العكسي تعطي البواقي: 1101"
+                    }
+                ]
+            },
+            {
+                id: 2,
+                title: "المرحلة الثانية: أنواع البيانات ومصادر جمعها وتنظيمها",
+                pages: "صفحات الكتاب: 27–47",
+                maxScore: 6,
+                concept: "تتعدد أنواع البيانات (نصية، عددیة، منطقية، تاريخ/وقت). تُجمع البيانات من مصادر أولية (كالاستبانات والمقابلات) أو ثانوية (كالكتب والتقارير)، وتُنظّم في جداول ذات علاقات مترابطة.",
+                tasks: [
+                    {
+                        type: "mcq",
+                        question: "تُعد المقابلة المباشرة مع الطلاب لجمع آرائهم حول المكتبة مصدرًا:",
+                        options: ["مصدرًا ثانويًا للبيانات", "مصدرًا أوليًا للبيانات", "بيانات ضخمة غير معالجة", "معرفة ضمنية صريحة"],
+                        correct: 1,
+                        explanation: "المصادر الأولية هي التي تُجمع فيها البيانات مباشرة من الميدان لأول مرة."
+                    },
+                    {
+                        type: "data_type_match",
+                        question: "حدد نوع البيانات المناسب لكل حقل من حقول جدول الطالب:",
+                        fields: [
+                            { name: "تاريخ الميلاد", type: "date", options: ["نص", "تاريخ/وقت", "منطقي"], correct: "تاريخ/وقت" },
+                            { name: "معدل الطالب (92.5)", type: "number", options: ["عددي", "نص", "منطقي"], correct: "عددي" },
+                            { name: "هل الطالب مسدد للرسوم؟", type: "boolean", options: ["عددي", "منطقي (نعم/لا)", "نص"], correct: "منطقي (نعم/لا)" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 3,
+                title: "المرحلة الثالثة: البيانات الضخمة وعمليات معالجتها",
+                pages: "صفحات الكتاب: 50–52",
+                maxScore: 6,
+                concept: "تتميز البيانات الضخمة بالحجم الكبير والسرعة والتنوع. تشمل عمليات معالجتها: التحويل (Conversion)، التعميم (Generalization)، التبسيط (Simplification)، والتمثيل.",
+                tasks: [
+                    {
+                        type: "mcq",
+                        question: "عملية استبدال القيم التفصيلية الفردية بفئات أعلى (مثل تحويل الأعمار التفصيلية إلى فئة 'شباب') تُسمى:",
+                        options: ["التبسيط", "التعميم (Generalization)", "التحويل الرقمي", "التشفير الثنائي"],
+                        correct: 1,
+                        explanation: "التعميم هو تحويل البيانات الفردية الدقيقة إلى فئات شاملة تسهّل التحليل."
+                    },
+                    {
+                        type: "process_arrange",
+                        question: "رتّب الخطوات الصحيحة لمعالجة البيانات الضخمة لاتخاذ القرار:",
+                        steps: [
+                            "جمع البيانات الخام من المصادر المتعددة",
+                            "معالجة البيانات وتبسيطها وتجميعها",
+                            "التمثيل المرئي للبيانات عبر المخططات",
+                            "استخلاص المعرفة واتخاذ القرار المناسب"
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 4,
+                title: "المرحلة الرابعة: التمثيل المرئي والتفاعلي للبيانات",
+                pages: "صفحات الكتاب: 53–73",
+                maxScore: 6,
+                concept: "يساعد التمثيل المرئي في فهم الأنماط والعلاقات فوراً. يُستخدم العمودي للتصنيفات، والدائري للنسب المئوية، والخطّي لتتبع التغيرات عبر الزمن.",
+                tasks: [
+                    {
+                        type: "chart_select",
+                        question: "أنت بحاجة لإظهار تطور نسبة استعارة الكتب في المدرسة على مدار أشهر السنة الدراسية، ما أفضل مخطط مرئي؟",
+                        options: ["المخطط الدائري (Pie Chart)", "المخطط الخطّي (Line Chart)", "المخطط النقطي", "الجدول النصي الخام"],
+                        correct: 1,
+                        explanation: "المخطط الخطي هو الأفضل لتمثيل البيانات والمؤشرات على فترات زمنية متتابعة."
+                    },
+                    {
+                        type: "interactive_sim",
+                        question: "تفاعل مع المخطط أدناه: اختر الفئة الأعلى في القراءة واستخرج النسبة:"
+                    }
+                ]
+            },
+            {
+                id: 5,
+                title: "المرحلة الخامسة: تحليل البيانات باستخدام Excel والتفسير",
+                pages: "صفحات الكتاب: 74–95",
+                maxScore: 6,
+                concept: "يتضمن تحليل البيانات استخدام الصيغ الحسابية (مثل AVERAGE, SUM, COUNTIF)، وتفسير النتائج للتنبؤ بالسلوكيات المستقبلية واتخاذ القرارات السليمة.",
+                tasks: [
+                    {
+                        type: "excel_formula",
+                        question: "في برنامج Excel، لحساب متوسط درجات الطلاب في حقل الدرجات من الخلية B2 إلى B20، نستخدم الصيغة:",
+                        options: ["=SUM(B2:B20)", "=AVERAGE(B2:B20)", "=COUNT(B2:B20)", "=MAX(B2:B20)"],
+                        correct: 1,
+                        explanation: "الدالة AVERAGE تُستخدم لحساب المعدل أو المتوسط الحسابي لنطاق من الخلايا."
+                    },
+                    {
+                        type: "case_study",
+                        question: "أظهرت نتائج تحليل Excel أن متوسط عدد الكتب المقروءة في الشعبة 'أ' هو 8 كتب، وفي الشعبة 'ب' هو 3 كتب. ما القرار التربوي الأنسب؟",
+                        options: ["إغلاق مكتبة الشعبة 'أ'", "تنفيذ برنامج تحفيزي للقراءة موجه للشعبة 'ب'", "إلغاء حصص المهارات الرقمية", "تجميع الكتب وتخزينها"],
+                        correct: 1,
+                        explanation: "القرار المبني على البيانات يتجه لدعم الشعبة الأقل أداءً ببرامج تعزيزية."
+                    }
+                ]
+            }
+        ];
+
+        // Global Local Database Backup (In-Memory + LocalStorage Fallback)
+        let LOCAL_DATABASE = JSON.parse(localStorage.getItem('unrwa_data_mission_db') || '[]');
+
+        function saveLocalDb() {
+            localStorage.setItem('unrwa_data_mission_db', JSON.stringify(LOCAL_DATABASE));
+        }
+
+        // Audio Effects Simulation
+        function playSound(type) {
+            if (!APP_STATE.audioEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'success') {
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3); // A5
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'click') {
+                    osc.frequency.setValueAtTime(400, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.08);
+                }
+            } catch(e) { console.log('Audio Context error', e); }
+        }
+
+        function toggleAudio() {
+            APP_STATE.audioEnabled = !APP_STATE.audioEnabled;
+            const icon = document.getElementById('audioIcon');
+            if (APP_STATE.audioEnabled) {
+                icon.className = 'fas fa-volume-up text-amber-400';
+            } else {
+                icon.className = 'fas fa-volume-mute text-slate-500';
+            }
+        }
+
+        // Modal Helpers
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        function showTeacherLoginModal() {
+            document.getElementById('teacherLoginModal').classList.remove('hidden');
+        }
+
+        // =========================================================================
+        // 2. UI NAVIGATION & RENDER ENGINE
+        // =========================================================================
+        function renderApp() {
+            const container = document.getElementById('appContainer');
+            
+            if (APP_STATE.currentStage === 0) {
+                renderStartScreen(container);
+            } else if (APP_STATE.currentStage >= 1 && APP_STATE.currentStage <= 5) {
+                renderGameStage(container, APP_STATE.currentStage);
+            } else if (APP_STATE.currentStage === 6) {
+                renderResultScreen(container);
+            } else if (APP_STATE.currentStage === 99) {
+                renderTeacherDashboard(container);
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // START SCREEN (Stage 0)
+        // -------------------------------------------------------------------------
+        function renderStartScreen(container) {
+            container.innerHTML = `
+                <div class="max-w-4xl mx-auto bg-slate-800/90 border border-sky-500/30 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden">
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl"></div>
+                    <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
+
+                    <div class="text-center mb-8 relative z-10">
+                        <span class="bg-sky-500/20 text-sky-300 text-xs font-bold px-4 py-1.5 rounded-full border border-sky-400/30 inline-block mb-3">
+                            منصة الألعاب التعليمية التفاعلية
+                        </span>
+                        <h2 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-sky-200 to-amber-300 mb-2">
+                            مهمة تحليل البيانات
+                        </h2>
+                        <p class="text-slate-300 text-sm md:text-base max-w-2xl mx-auto">
+                            استعد للانطلاق في رحلة تفاعلية شيقة لاستكشاف عالم البيانات، التحويل الثنائي، البيانات الضخمة، والتحليل المتقدم عبر أداة Excel وفق منهاج المهارات الرقمية الأردني.
+                        </p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-center mb-8 relative z-10">
+                        <!-- Student Information Form -->
+                        <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-700/80 shadow-inner">
+                            <h3 class="text-lg font-bold text-sky-400 mb-4 flex items-center gap-2">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>بيانات الطالب للتسجيل</span>
+                            </h3>
+                            <form onsubmit="startMission(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 mb-1">اسم الطالب الرباعي <span class="text-amber-400">*</span></label>
+                                    <input type="text" id="studentNameInput" required placeholder="أدخل اسمك الكامل هنا..." class="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-sm focus:border-sky-400 outline-none transition text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 mb-1">الشعبة الدراسية <span class="text-amber-400">*</span></label>
+                                    <select id="studentSectionInput" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-sm focus:border-sky-400 outline-none transition text-white">
+                                        ${APP_STATE.sectionsList.map(sec => `<option value="${sec}">الصف العاشر (شعبة ${sec})</option>`).join('')}
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white font-black py-3.5 rounded-xl text-base shadow-lg transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                                    <i class="fas fa-rocket"></i>
+                                    <span>ابدأ المهمة الآن (30 علامة)</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Instructions & Info -->
+                        <div class="space-y-4">
+                            <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl flex items-start gap-3">
+                                <div class="bg-amber-500/20 text-amber-400 p-2.5 rounded-lg text-lg">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-200">نظام التقييم والدرجات</h4>
+                                    <p class="text-xs text-slate-400">تتكون اللعبة من 5 مراحل تفاعلية، تمنحك كل مرحلة إمكانية تحصيل 6 علامات لمجموع نهائي 30 علامة.</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl flex items-start gap-3">
+                                <div class="bg-sky-500/20 text-sky-400 p-2.5 rounded-lg text-lg">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-200">المصدر المعتمد</h4>
+                                    <p class="text-xs text-slate-400">كتاب المهارات الرقمية للصف العاشر (الوحدة الأولى - الصفحات 10 إلى 107).</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl flex items-start gap-3">
+                                <div class="bg-emerald-500/20 text-emerald-400 p-2.5 rounded-lg text-lg">
+                                    <i class="fas fa-certificate"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-slate-200">الشهادة والتقارير</h4>
+                                    <p class="text-xs text-slate-400">تحصل عند الإكمال على شهادة رسمية صادرة باسمك موثقة بنتيجتك النهائية من 30.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startMission(e) {
+            e.preventDefault();
+            const name = document.getElementById('studentNameInput').value.trim();
+            const section = document.getElementById('studentSectionInput').value;
+            if (!name) return;
+
+            APP_STATE.student.name = name;
+            APP_STATE.student.section = section;
+            APP_STATE.student.startTime = new Date().toISOString();
+            APP_STATE.currentStage = 1;
+            playSound('success');
+            renderApp();
+        }
+
+        // -------------------------------------------------------------------------
+        // GAME STAGE (Stages 1..5)
+        // -------------------------------------------------------------------------
+        function renderGameStage(container, stageNum) {
+            const stage = STAGES[stageNum - 1];
+            const name = APP_STATE.student.name;
+
+            container.innerHTML = `
+                <div class="space-y-6 max-w-5xl mx-auto">
+                    <!-- GAME STATUS BAR -->
+                    <div class="bg-slate-800/90 border border-sky-500/30 rounded-2xl p-4 flex flex-wrap justify-between items-center gap-4 shadow-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-sky-600 rounded-full flex items-center justify-center font-black text-lg text-white">
+                                ${stageNum}
+                            </div>
+                            <div>
+                                <div class="text-xs text-sky-400 font-bold">أهلاً بك يا بطل: <span class="text-amber-300 font-bold">${name}</span></div>
+                                <div class="text-sm md:text-base font-extrabold text-white">${stage.title}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="text-center">
+                                <div class="text-xs text-slate-400">الدرجة الحالية</div>
+                                <div class="text-lg font-black text-amber-400" id="currentStageScoreDisplay">0 / ${stage.maxScore}</div>
+                            </div>
+                            <div class="w-32 bg-slate-700 h-3 rounded-full overflow-hidden">
+                                <div class="bg-gradient-to-r from-sky-400 to-amber-400 h-full" style="width: ${(stageNum / 5) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONCEPT SUMMARY CARD -->
+                    <div class="bg-slate-800/60 border border-slate-700 p-5 rounded-2xl relative">
+                        <div class="flex items-center gap-2 text-sky-400 font-bold text-sm mb-2">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>المفهوم الشارح (${stage.pages})</span>
+                        </div>
+                        <p class="text-sm text-slate-200 leading-relaxed">${stage.concept}</p>
+                    </div>
+
+                    <!-- DYNAMIC TASK CONTAINER -->
+                    <div class="bg-slate-800/90 border border-sky-500/30 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+                        ${renderTaskContent(stage, stageNum)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTaskContent(stage, stageNum) {
+            let html = '';
+            
+            if (stageNum === 1) {
+                html = `
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-bold text-sky-300 flex items-center gap-2">
+                            <i class="fas fa-puzzle-piece"></i>
+                            <span>التحدي الأول: تصنيف البيانات والمعلومات والمعرفة</span>
+                        </h3>
+                        <p class="text-xs text-slate-300">طابق كل جملة بالمفهوم المناسب لها لتثبت معرفتك بالمادة:</p>
+
+                        <div class="grid gap-4 md:grid-cols-3">
+                            ${stage.tasks[0].items.map((item, idx) => `
+                                <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                                    <p class="text-sm font-bold text-amber-300 mb-3">"${item.text}"</p>
+                                    <select id="stage1_match_${idx}" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-xs text-white">
+                                        <option value="">اختر المفهوم...</option>
+                                        <option value="data">بيانات خام</option>
+                                        <option value="info">معلومات</option>
+                                        <option value="knowledge">معرفة</option>
+                                    </select>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <hr class="border-slate-700">
+
+                        <h3 class="text-lg font-bold text-sky-300 flex items-center gap-2">
+                            <i class="fas fa-microchip"></i>
+                            <span>التحدي الثاني: تحويل الأعداد إلى النظام الثنائي</span>
+                        </h3>
+                        <p class="text-xs text-slate-300">${stage.tasks[1].question}</p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            ${stage.tasks[1].options.map((opt, idx) => `
+                                <button onclick="selectStage1Opt(${idx})" id="stage1_opt_${idx}" class="opt-btn-1 bg-slate-900 hover:bg-slate-700 border border-slate-700 p-3 rounded-xl text-center font-mono font-bold text-base transition">
+                                    ${opt}
+                                </button>
+                            `).join('')}
+                        </div>
+
+                        <button onclick="evaluateStage1()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition mt-4">
+                            تحقق من الإجابة والانتقال للمرحلة التالية
+                        </button>
+                    </div>
+                `;
+            } else if (stageNum === 2) {
+                html = `
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-bold text-sky-300 flex items-center gap-2">
+                            <i class="fas fa-filter"></i>
+                            <span>تحدي أنواع البيانات ومصادر الجمع</span>
+                        </h3>
+                        
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                            <p class="text-sm text-slate-200 mb-3">${stage.tasks[0].question}</p>
+                            <div class="space-y-2">
+                                ${stage.tasks[0].options.map((opt, idx) => `
+                                    <label class="flex items-center gap-3 bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-pointer hover:bg-slate-750">
+                                        <input type="radio" name="stage2_q1" value="${idx}" class="text-sky-500">
+                                        <span class="text-xs md:text-sm text-slate-200">${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                            <p class="text-sm font-bold text-sky-300 mb-3">${stage.tasks[1].question}</p>
+                            <div class="space-y-3">
+                                ${stage.tasks[1].fields.map((f, idx) => `
+                                    <div class="flex flex-wrap justify-between items-center gap-2 bg-slate-800 p-3 rounded-lg">
+                                        <span class="text-xs font-bold text-amber-300">${f.name}</span>
+                                        <select id="stage2_field_${idx}" class="bg-slate-900 border border-slate-700 rounded p-1.5 text-xs">
+                                            <option value="">اختر النوع...</option>
+                                            ${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <button onclick="evaluateStage2()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">
+                            تحقق وانتقل للمرحلة الثالثة
+                        </button>
+                    </div>
+                `;
+            } else if (stageNum === 3) {
+                html = `
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-bold text-sky-300 flex items-center gap-2">
+                            <i class="fas fa-database"></i>
+                            <span>تحدي معالجة البيانات الضخمة (Big Data)</span>
+                        </h3>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                            <p class="text-sm text-slate-200 mb-3">${stage.tasks[0].question}</p>
+                            <div class="space-y-2">
+                                ${stage.tasks[0].options.map((opt, idx) => `
+                                    <label class="flex items-center gap-3 bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-pointer">
+                                        <input type="radio" name="stage3_q1" value="${idx}">
+                                        <span class="text-xs text-slate-200">${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                            <p class="text-sm font-bold text-amber-300 mb-3">${stage.tasks[1].question}</p>
+                            <div class="space-y-2" id="arrangeContainer">
+                                ${stage.tasks[1].steps.map((step, idx) => `
+                                    <div class="flex items-center gap-3 bg-slate-800 p-3 rounded-lg border border-slate-700">
+                                        <span class="font-bold text-sky-400">خطوة:</span>
+                                        <select id="stage3_step_${idx}" class="bg-slate-900 border border-slate-700 rounded p-1.5 text-xs text-white">
+                                            <option value="">الترتيب...</option>
+                                            <option value="1">1 (الأولى)</option>
+                                            <option value="2">2 (الثانية)</option>
+                                            <option value="3">3 (الثالثة)</option>
+                                            <option value="4">4 (الرابعة)</option>
+                                        </select>
+                                        <span class="text-xs text-slate-200">${step}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <button onclick="evaluateStage3()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">
+                            تحقق وانتقل للمرحلة الرابعة
+                        </button>
+                    </div>
+                `;
+            } else if (stageNum === 4) {
+                html = `
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-bold text-sky-300 flex items-center gap-2">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>تحدي التمثيل المرئي للبيانات</span>
+                        </h3>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                            <p class="text-sm text-slate-200 mb-3">${stage.tasks[0].question}</p>
+                            <div class="space-y-2">
+                                ${stage.tasks[0].options.map((opt, idx) => `
+                                    <label class="flex items-center gap-3 bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-pointer">
+                                        <input type="radio" name="stage4_q1" value="${idx}">
+                                        <span class="text-xs text-slate-200">${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Chart Canvas -->
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-center">
+                            <p class="text-xs font-bold text-slate-300 mb-2">مخطط تفاعلي: نسبة استعارة الكتب بين الشعب الدراسية</p>
+                            <div class="max-w-md mx-auto h-48">
+                                <canvas id="stageChartCanvas"></canvas>
+                            </div>
+                            <div class="mt-4">
+                                <label class="block text-xs font-bold text-amber-300 mb-1">بناءً على المخطط أعلاه، ما هي الشعبة ذات النسبة الأعلى في الاستعارة؟</label>
+                                <select id="stage4_chart_ans" class="bg-slate-800 border border-slate-600 rounded p-2 text-xs">
+                                    <option value="">اختر الشعبة...</option>
+                                    <option value="أ">الشعبة أ</option>
+                                    <option value="ب">الشعبة ب</option>
+                                    <option value="ج">الشعبة ج</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button onclick="evaluateStage4()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition">
+                            تحقق وانتقل للمرحلة الخامسة
+                        </button>
+                    </div>
+                `;
+                setTimeout(initStageChart, 100);
+            } else if (stageNum === 5) {
+                html = `
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-bold text-sky-300 flex items-center gap-2">
+                            <i class="fas fa-file-excel"></i>
+                            <span>التحدي النهائي: تحليل البيانات ببرنامج Excel والتفسير</span>
+                        </h3>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                            <p class="text-sm text-slate-200 mb-3">${stage.tasks[0].question}</p>
+                            <div class="space-y-2">
+                                ${stage.tasks[0].options.map((opt, idx) => `
+                                    <label class="flex items-center gap-3 bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-pointer">
+                                        <input type="radio" name="stage5_q1" value="${idx}">
+                                        <span class="text-xs font-mono text-sky-300">${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                            <p class="text-sm text-slate-200 mb-3">${stage.tasks[1].question}</p>
+                            <div class="space-y-2">
+                                ${stage.tasks[1].options.map((opt, idx) => `
+                                    <label class="flex items-center gap-3 bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-pointer">
+                                        <input type="radio" name="stage5_q2" value="${idx}">
+                                        <span class="text-xs text-slate-200">${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <button onclick="evaluateStage5()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3.5 rounded-xl text-base shadow-xl transition">
+                            إنهاء المهمة وحساب النتيجة النهائية (من 30)
+                        </button>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        // Selected option state for Binary Task
+        let selectedStage1Opt = null;
+        function selectStage1Opt(idx) {
+            selectedStage1Opt = idx;
+            document.querySelectorAll('.opt-btn-1').forEach((btn, i) => {
+                if (i === idx) {
+                    btn.className = 'opt-btn-1 bg-sky-600 border-sky-400 p-3 rounded-xl text-center font-mono font-bold text-base text-white shadow-lg';
+                } else {
+                    btn.className = 'opt-btn-1 bg-slate-900 border-slate-700 p-3 rounded-xl text-center font-mono font-bold text-base text-slate-300';
+                }
+            });
+            playSound('click');
+        }
+
+        function initStageChart() {
+            const ctx = document.getElementById('stageChartCanvas');
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['الشعبة أ', 'الشعبة ب', 'الشعبة ج'],
+                    datasets: [{
+                        label: 'نسبة الاستعارة %',
+                        data: [85, 45, 60],
+                        backgroundColor: ['#0072CE', '#F59E0B', '#10B981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+        }
+
+        // STAGE EVALUATORS (Each worth 6 points)
+        function evaluateStage1() {
+            let score = 0;
+            const items = STAGES[0].tasks[0].items;
+            items.forEach((item, idx) => {
+                const val = document.getElementById(`stage1_match_${idx}`)?.value;
+                if (val === item.category) score += 1;
+            });
+            if (selectedStage1Opt === STAGES[0].tasks[1].correct) {
+                score += 3;
+            }
+            APP_STATE.score.stage1 = score;
+            APP_STATE.currentStage = 2;
+            playSound('success');
+            renderApp();
+        }
+
+        function evaluateStage2() {
+            let score = 0;
+            const q1 = document.querySelector('input[name="stage2_q1"]:checked')?.value;
+            if (parseInt(q1) === STAGES[1].tasks[0].correct) score += 3;
+
+            const fields = STAGES[1].tasks[1].fields;
+            fields.forEach((f, idx) => {
+                const val = document.getElementById(`stage2_field_${idx}`)?.value;
+                if (val === f.correct) score += 1;
+            });
+
+            APP_STATE.score.stage2 = score;
+            APP_STATE.currentStage = 3;
+            playSound('success');
+            renderApp();
+        }
+
+        function evaluateStage3() {
+            let score = 0;
+            const q1 = document.querySelector('input[name="stage3_q1"]:checked')?.value;
+            if (parseInt(q1) === STAGES[2].tasks[0].correct) score += 3;
+
+            // Step order logic (1, 2, 3, 4)
+            const s0 = document.getElementById('stage3_step_0')?.value;
+            const s1 = document.getElementById('stage3_step_1')?.value;
+            const s2 = document.getElementById('stage3_step_2')?.value;
+            const s3 = document.getElementById('stage3_step_3')?.value;
+
+            if (s0 === '1' && s1 === '2' && s2 === '3' && s3 === '4') score += 3;
+
+            APP_STATE.score.stage3 = score;
+            APP_STATE.currentStage = 4;
+            playSound('success');
+            renderApp();
+        }
+
+        function evaluateStage4() {
+            let score = 0;
+            const q1 = document.querySelector('input[name="stage4_q1"]:checked')?.value;
+            if (parseInt(q1) === STAGES[3].tasks[0].correct) score += 3;
+
+            const chartAns = document.getElementById('stage4_chart_ans')?.value;
+            if (chartAns === 'أ') score += 3;
+
+            APP_STATE.score.stage4 = score;
+            APP_STATE.currentStage = 5;
+            playSound('success');
+            renderApp();
+        }
+
+        function evaluateStage5() {
+            let score = 0;
+            const q1 = document.querySelector('input[name="stage5_q1"]:checked')?.value;
+            if (parseInt(q1) === STAGES[4].tasks[0].correct) score += 3;
+
+            const q2 = document.querySelector('input[name="stage5_q2"]:checked')?.value;
+            if (parseInt(q2) === STAGES[4].tasks[1].correct) score += 3;
+
+            APP_STATE.score.stage5 = score;
+            APP_STATE.score.total = APP_STATE.score.stage1 + APP_STATE.score.stage2 + APP_STATE.score.stage3 + APP_STATE.score.stage4 + APP_STATE.score.stage5;
+            APP_STATE.student.endTime = new Date().toISOString();
+
+            // Save Attempt Record to local storage DB
+            const attemptRecord = {
+                id: 'ATT-' + Date.now(),
+                student_name: APP_STATE.student.name,
+                section: APP_STATE.student.section,
+                stage1: APP_STATE.score.stage1,
+                stage2: APP_STATE.score.stage2,
+                stage3: APP_STATE.score.stage3,
+                stage4: APP_STATE.score.stage4,
+                stage5: APP_STATE.score.stage5,
+                total_score: APP_STATE.score.total,
+                created_at: new Date().toLocaleDateString('ar-JO') + ' ' + new Date().toLocaleTimeString('ar-JO')
+            };
+
+            LOCAL_DATABASE.unshift(attemptRecord);
+            saveLocalDb();
+
+            APP_STATE.currentStage = 6;
+            playSound('success');
+            renderApp();
+        }
+
+        // -------------------------------------------------------------------------
+        // RESULT & CERTIFICATE SCREEN (Stage 6)
+        // -------------------------------------------------------------------------
+        function renderResultScreen(container) {
+            const student = APP_STATE.student;
+            const score = APP_STATE.score;
+            const percentage = Math.round((score.total / 30) * 100);
+
+            container.innerHTML = `
+                <div class="space-y-8 max-w-4xl mx-auto">
+                    <!-- RESULT SUMMARY -->
+                    <div class="bg-slate-800/90 border border-sky-500/30 rounded-3xl p-6 md:p-8 text-center shadow-2xl relative no-print">
+                        <div class="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 border border-amber-400/40">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-black text-white mb-1">
+                            مبارك إتمام المهمة يا بطل: <span class="text-sky-400">${student.name}</span>
+                        </h2>
+                        <p class="text-xs text-slate-300 mb-6">الصف العاشر الأساسي - شعبة (${student.section})</p>
+
+                        <!-- SCORE BADGE -->
+                        <div class="inline-block bg-slate-900 border-2 border-amber-400 px-8 py-4 rounded-2xl shadow-xl mb-6">
+                            <div class="text-xs text-slate-400 font-bold mb-1">العلامة النهائية الإجمالية</div>
+                            <div class="text-4xl md:text-5xl font-black text-amber-400 font-mono">
+                                ${score.total} <span class="text-xl text-slate-400">/ 30</span>
+                            </div>
+                            <div class="text-xs text-emerald-400 font-bold mt-1">نسبة الإنجاز: ${percentage}%</div>
+                        </div>
+
+                        <!-- STAGE BREAKDOWN GRID -->
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                                <div class="text-[10px] text-slate-400">المرحلة 1</div>
+                                <div class="text-base font-bold text-sky-400 font-mono">${score.stage1} / 6</div>
+                            </div>
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                                <div class="text-[10px] text-slate-400">المرحلة 2</div>
+                                <div class="text-base font-bold text-sky-400 font-mono">${score.stage2} / 6</div>
+                            </div>
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                                <div class="text-[10px] text-slate-400">المرحلة 3</div>
+                                <div class="text-base font-bold text-sky-400 font-mono">${score.stage3} / 6</div>
+                            </div>
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                                <div class="text-[10px] text-slate-400">المرحلة 4</div>
+                                <div class="text-base font-bold text-sky-400 font-mono">${score.stage4} / 6</div>
+                            </div>
+                            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
+                                <div class="text-[10px] text-slate-400">المرحلة 5</div>
+                                <div class="text-base font-bold text-sky-400 font-mono">${score.stage5} / 6</div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4 justify-center">
+                            <button onclick="window.print()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2 text-sm">
+                                <i class="fas fa-print"></i>
+                                <span>طباعة الشهادة الرسمية</span>
+                            </button>
+                            <button onclick="resetGame()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-6 py-3 rounded-xl transition flex items-center gap-2 text-sm">
+                                <i class="fas fa-redo"></i>
+                                <span>إعادة المحاولة</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- OFFICIAL PRINTABLE A4 CERTIFICATE -->
+                    <div class="bg-white text-slate-900 p-8 rounded-2xl shadow-2xl border-8 border-sky-700 print-only font-cairo my-6">
+                        <div class="border-2 border-amber-500 p-6 rounded-lg text-center space-y-4">
+                            <div class="flex justify-between items-center border-b pb-4">
+                                <div class="text-right text-xs text-slate-600">
+                                    <p class="font-bold">المملكة الأردنية الهاشمية</p>
+                                    <p>وكالة الغوث الدولية — UNRWA</p>
+                                    <p class="font-bold text-sky-700">مدرسة ذكور وادي السير الإعدادية</p>
+                                </div>
+                                <div class="text-center">
+                                    <h1 class="text-2xl font-black text-sky-800">شهادة تقدير وإنجاز رقمي</h1>
+                                    <p class="text-xs text-slate-500">مشروع منصة مهمة تحليل البيانات</p>
+                                </div>
+                                <div class="text-left text-xs text-slate-600">
+                                    <p>التاريخ: ${new Date().toLocaleDateString('ar-JO')}</p>
+                                    <p>المهارات الرقمية</p>
+                                </div>
+                            </div>
+
+                            <div class="py-6 space-y-3">
+                                <p class="text-sm">يشهد المعلم وجاهزية المهارات الرقمية بأن الطالب البطل:</p>
+                                <h3 class="text-3xl font-black text-amber-600 border-b-2 border-amber-400 inline-block px-8 py-1">${student.name}</h3>
+                                <p class="text-sm">من الصف العاشر الأساسي — شعبة (<span class="font-bold">${student.section}</span>)</p>
+                                <p class="text-sm">قد أتم بنجاح كلي جميع مراحل اللعبة التعليمية التفاعلية في وحدة <span class="font-bold">تحليل البيانات</span></p>
+                                
+                                <div class="my-4 inline-block bg-sky-50 border border-sky-300 px-6 py-3 rounded-xl">
+                                    <span class="text-xs text-slate-600 block">العلامة الرسمية المستحقة</span>
+                                    <span class="text-3xl font-black text-sky-800 font-mono">${score.total} من 30</span>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-end pt-8 text-xs font-bold border-t">
+                                <div>
+                                    <p class="text-slate-500">ختم المدرسة والتصديق</p>
+                                    <div class="w-20 h-20 border border-dashed rounded-full border-slate-400 mx-auto mt-2 flex items-center justify-center text-[10px] text-slate-400">ختم UNRWA</div>
+                                </div>
+                                <div>
+                                    <p class="text-slate-600">إعداد ومعلم المبحث</p>
+                                    <p class="text-sky-800 font-black text-sm mt-2">أ. عامر كراجه</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetGame() {
+            APP_STATE.currentStage = 0;
+            APP_STATE.score = { stage1: 0, stage2: 0, stage3: 0, stage4: 0, stage5: 0, total: 0 };
+            renderApp();
+        }
+
+        // -------------------------------------------------------------------------
+        // TEACHER DASHBOARD (Stage 99)
+        // -------------------------------------------------------------------------
+        function handleTeacherLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('teacherPassword').value;
+            if (pass === 'karam2018') {
+                closeModal('teacherLoginModal');
+                APP_STATE.currentStage = 99;
+                renderApp();
+            } else {
+                document.getElementById('loginError').innerText = 'كلمة المرور غير صحيحة!';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function renderTeacherDashboard(container) {
+            const records = LOCAL_DATABASE;
+            const totalStudents = records.length;
+            const avgScore = totalStudents > 0 ? (records.reduce((acc, r) => acc + r.total_score, 0) / totalStudents).toFixed(1) : 0;
+            const maxScore = totalStudents > 0 ? Math.max(...records.map(r => r.total_score)) : 0;
+
+            container.innerHTML = `
+                <div class="space-y-6 max-w-6xl mx-auto">
+                    <!-- DASHBOARD HEADER -->
+                    <div class="bg-slate-800/90 border border-sky-500/30 rounded-2xl p-6 flex flex-wrap justify-between items-center gap-4 shadow-xl">
+                        <div>
+                            <span class="bg-amber-500/20 text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-400/30">لوحة التحكم الرسمية</span>
+                            <h2 class="text-2xl font-black text-white mt-1">إدارة درجات ومحاولات الطلاب</h2>
+                            <p class="text-xs text-slate-400">المعلم المخوّل: أ. عامر كراجه | مدرسة ذكور وادي السير الإعدادية</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5">
+                                <i class="fas fa-file-excel"></i>
+                                <span>تصدير تقرير Excel (CSV)</span>
+                            </button>
+                            <button onclick="showDbConfigModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-3 py-2 rounded-xl text-xs transition">
+                                <i class="fas fa-database"></i>
+                                <span>ربط Supabase</span>
+                            </button>
+                            <button onclick="resetGame()" class="bg-red-600/80 hover:bg-red-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>خروج</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ANALYTICS CARDS -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+                            <div class="text-xs text-slate-400">إجمالي الطلاب</div>
+                            <div class="text-2xl font-black text-sky-400 font-mono mt-1">${totalStudents}</div>
+                        </div>
+                        <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+                            <div class="text-xs text-slate-400">متوسط الدرجات</div>
+                            <div class="text-2xl font-black text-amber-400 font-mono mt-1">${avgScore} <span class="text-xs text-slate-400">/ 30</span></div>
+                        </div>
+                        <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+                            <div class="text-xs text-slate-400">أعلى درجة مسجلة</div>
+                            <div class="text-2xl font-black text-emerald-400 font-mono mt-1">${maxScore} <span class="text-xs text-slate-400">/ 30</span></div>
+                        </div>
+                        <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+                            <div class="text-xs text-slate-400">حالة الربط الخارجي</div>
+                            <div class="text-xs font-bold ${APP_STATE.supabaseClient ? 'text-emerald-400' : 'text-amber-400'} mt-2 flex items-center gap-1">
+                                <i class="fas fa-circle text-[8px]"></i>
+                                <span>${APP_STATE.supabaseClient ? 'متصل بـ Supabase' : 'حفظ محلي (Local DB)'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STUDENTS TABLE -->
+                    <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-base font-bold text-slate-200">سجل نتائج محاولات الطلاب</h3>
+                            <input type="text" id="tableSearchInput" onkeyup="filterStudentTable()" placeholder="بحث باسم الطالب..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:border-sky-400 outline-none">
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs text-slate-300">
+                                <thead class="bg-slate-900 text-sky-400 font-bold border-b border-slate-700">
+                                    <tr>
+                                        <th class="p-3">#</th>
+                                        <th class="p-3">اسم الطالب</th>
+                                        <th class="p-3">الشعبة</th>
+                                        <th class="p-3">م1</th>
+                                        <th class="p-3">م2</th>
+                                        <th class="p-3">م3</th>
+                                        <th class="p-3">م4</th>
+                                        <th class="p-3">م5</th>
+                                        <th class="p-3">المجموع (30)</th>
+                                        <th class="p-3">التاريخ</th>
+                                        <th class="p-3">إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentTableBody" class="divide-y divide-slate-700/50">
+                                    ${records.length === 0 ? `
+                                        <tr><td colspan="11" class="text-center py-6 text-slate-500">لا توجد محاولات مسجلة بعد</td></tr>
+                                    ` : records.map((r, idx) => `
+                                        <tr class="hover:bg-slate-750">
+                                            <td class="p-3 font-mono">${idx + 1}</td>
+                                            <td class="p-3 font-bold text-white">${r.student_name}</td>
+                                            <td class="p-3">${r.section}</td>
+                                            <td class="p-3 font-mono text-slate-400">${r.stage1}</td>
+                                            <td class="p-3 font-mono text-slate-400">${r.stage2}</td>
+                                            <td class="p-3 font-mono text-slate-400">${r.stage3}</td>
+                                            <td class="p-3 font-mono text-slate-400">${r.stage4}</td>
+                                            <td class="p-3 font-mono text-slate-400">${r.stage5}</td>
+                                            <td class="p-3 font-mono font-bold text-amber-400">${r.total_score}</td>
+                                            <td class="p-3 text-[10px] text-slate-400">${r.created_at}</td>
+                                            <td class="p-3">
+                                                <button onclick="editStudentScore('${r.id}')" class="text-sky-400 hover:text-sky-300 p-1" title="تعديل العلامة">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterStudentTable() {
+            const query = document.getElementById('tableSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#studentTableBody tr');
+            rows.forEach(row => {
+                const nameCell = row.children[1]?.innerText.toLowerCase() || '';
+                if (nameCell.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function editStudentScore(id) {
+            const rec = LOCAL_DATABASE.find(r => r.id === id);
+            if (!rec) return;
+            const newScoreStr = prompt(`تعديل درجة الطالب (${rec.student_name}) من 30:`, rec.total_score);
+            if (newScoreStr !== null) {
+                const newScore = parseInt(newScoreStr);
+                if (!isNaN(newScore) && newScore >= 0 && newScore <= 30) {
+                    rec.total_score = newScore;
+                    saveLocalDb();
+                    renderTeacherDashboard(document.getElementById('appContainer'));
+                } else {
+                    alert('يرجى إدخال درجة صالحة بين 0 و 30');
+                }
+            }
+        }
+
+        function exportToCSV() {
+            if (LOCAL_DATABASE.length === 0) {
+                alert('لا توجد بيانات للتصدير!');
+                return;
+            }
+            let csvContent = "\uFEFFالرقم,اسم الطالب,الشعبة,م1,م2,م3,م4,م5,العلامة النهائية,التاريخ\n";
+            LOCAL_DATABASE.forEach((r, idx) => {
+                csvContent += `${idx + 1},"${r.student_name}",${r.section},${r.stage1},${r.stage2},${r.stage3},${r.stage4},${r.stage5},${r.total_score},"${r.created_at}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `تقرير_علامات_تحليل_البيانات_${new Date().toLocaleDateString('ar-JO')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showDbConfigModal() {
+            document.getElementById('dbConfigModal').classList.remove('hidden');
+        }
+
+        function saveSupabaseConfig() {
+            const url = document.getElementById('supabaseUrlInput').value.trim();
+            const key = document.getElementById('supabaseKeyInput').value.trim();
+            if (url && key && window.supabase) {
+                try {
+                    APP_STATE.supabaseClient = window.supabase.createClient(url, key);
+                    alert('تم الربط بنجاح مع Supabase!');
+                    closeModal('dbConfigModal');
+                    renderApp();
+                } catch(e) {
+                    alert('خطأ في إعدادات الربط!');
+                }
+            }
+        }
+
+        // Initialize App on Window Load
+        window.onload = function() {
+            renderApp();
+        };
+    </script>
+</body>
+</html>
